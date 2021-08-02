@@ -28,7 +28,8 @@ def affine_forward(x, w, b):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    rx = x.reshape(x.shape[0], -1)
+    out = np.matmul(rx, w) + b
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -61,7 +62,10 @@ def affine_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    dx = np.matmul(dout, w.T)
+    dx = dx.reshape(x.shape)
+    dw = np.matmul(x.reshape(x.shape[0], -1).T, dout)
+    db = np.sum(dout, axis=0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -87,7 +91,7 @@ def relu_forward(x):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    out = np.maximum(x, 0)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -114,7 +118,8 @@ def relu_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    dx = dout.copy()
+    dx[x <= 0] = 0
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -145,7 +150,17 @@ def svm_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    num_train = x.shape[0]
+
+    margin = np.maximum(x - np.reshape(x[np.arange(num_train), y], (-1, 1)) + 1, 0)  # matrix with hinge loss margins
+    margin[np.arange(num_train), y] = 0
+    loss = np.sum(margin) / num_train
+
+    dx = margin.copy()
+    dx[dx != 0] = 1
+    count_margins = np.sum(dx, axis=1)
+    dx[np.arange(num_train), y] -= count_margins
+    dx /= num_train
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -176,7 +191,19 @@ def softmax_loss(x, y):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    num_train = x.shape[0]
+    num_classes = x.shape[1]
+
+    exp_scores = np.exp(x)
+    sum_exp = np.sum(exp_scores, axis=1).reshape((-1, 1))
+    probs = exp_scores / sum_exp
+    loss = np.mean(-np.log(probs[np.arange(num_train), y]))
+
+    yi_flag = np.zeros((num_train, num_classes))
+    yi_flag[np.arange(num_train), y] = 1
+    dx = 1 / probs[np.arange(num_train), y].reshape((-1, 1)) * exp_scores / sum_exp * \
+         (exp_scores[np.arange(num_train), y].reshape((-1, 1)) / sum_exp - yi_flag)
+    dx /= num_train
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
